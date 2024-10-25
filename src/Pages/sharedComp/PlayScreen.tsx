@@ -137,33 +137,41 @@ function PlayScreen() {
     return (
       <Template>
           <Toaster richColors />
-          <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
-            <DialogContent className="sm:max-w-[425px] bg-[#1D1B4D] text-white">
-              <DialogHeader>
-                <DialogTitle>Authentication Required</DialogTitle>
-                <DialogDescription className="text-gray-300">
-                  Please sign in to play the game and win amazing prizes!
-                </DialogDescription>
-              </DialogHeader>
-              <div className="flex flex-col space-y-4 mt-4">
-                <p className="text-sm text-gray-300">
-                  Sign in to:
-                  <ul className="list-disc list-inside mt-2 space-y-1">
-                    <li>Spin the wheel</li>
-                    <li>Win Test coins</li>
-                    <li>Track your winnings</li>
-                    <li>Compete with other players</li>
-                  </ul>
-                </p>
-                <button
-                  onClick={() => setShowAuthDialog(false)}
-                  className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
-                >
-                  Got it
-                </button>
-              </div>
-            </DialogContent>
-          </Dialog>
+         <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
+  <DialogContent className="sm:max-w-[425px] bg-[#1D1B4D] text-white">
+    <DialogHeader>
+      <DialogTitle>Authentication Required</DialogTitle>
+      <DialogDescription className="text-gray-300">
+        Open this game in Telegram to play and win amazing prizes!
+      </DialogDescription>
+    </DialogHeader>
+    <div className="flex flex-col space-y-4 mt-4">
+      <a 
+        href="https://t.me/YourAppName"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="bg-[#0088cc] text-white px-4 py-2 rounded-lg hover:bg-[#0077b5] transition-colors text-center"
+      >
+        Open in Telegram
+      </a>
+      <p className="text-sm text-gray-300">
+        Opening in Telegram allows you to:
+        <ul className="list-disc list-inside mt-2 space-y-1">
+          <li>Spin the wheel</li>
+          <li>Win Test coins</li>
+          <li>Track your winnings</li>
+          <li>Compete with other players</li>
+        </ul>
+      </p>
+      <button
+        onClick={() => setShowAuthDialog(false)}
+        className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+      >
+        Cancel
+      </button>
+    </div>
+  </DialogContent>
+</Dialog>
 
           <Dialog open={showBalanceDialog} onOpenChange={setShowBalanceDialog}>
             <DialogContent className="sm:max-w-[425px] bg-[#1D1B4D] text-white">
