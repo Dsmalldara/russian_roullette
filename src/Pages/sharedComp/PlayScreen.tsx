@@ -142,7 +142,7 @@ function PlayScreen() {
     <DialogHeader>
       <DialogTitle>Authentication Required</DialogTitle>
       <DialogDescription className="text-gray-300">
-        Open this game in Telegram to play and win amazing prizes!
+        Open this game in Telegram and connect wallet to play and win amazing prizes!
       </DialogDescription>
     </DialogHeader>
     <div className="flex flex-col space-y-4 mt-4">
