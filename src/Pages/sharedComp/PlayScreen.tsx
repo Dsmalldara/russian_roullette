@@ -155,7 +155,7 @@ function PlayScreen() {
         Open in Telegram
       </a>
       <p className="text-sm text-gray-300">
-        Opening in Telegram allows you to:
+       Open in telegram and Connect wallet to:
         <ul className="list-disc list-inside mt-2 space-y-1">
           <li>Spin the wheel</li>
           <li>Win Test coins</li>
