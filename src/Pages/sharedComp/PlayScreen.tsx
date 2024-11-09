@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dialog";
 
 import { useDispatch, useSelector } from 'react-redux';
-import { deductSpinCost,increaseToken } from '@/slices/faucetSlice.ts';
+import { deductSpinCost, increaseToken } from '@/slices/faucetSlice.ts';
 
 function PlayScreen() {
     const dispatch = useDispatch();
@@ -29,8 +29,8 @@ function PlayScreen() {
     const [showAuthDialog, setShowAuthDialog] = useState(false);
     const [showBalanceDialog, setShowBalanceDialog] = useState(false);
     const [userdata, setUserdata] = useState<UserData | null>(null);
-    const [currentPlayers, setCurrentPlayers] = useState<string[]>([]);
     const [selectedRange, setSelectedRange] = useState<string | null>(null);
+    const [wheelData, setWheelData] = useState<Array<{ option: string }>>([]);
     
     const rawAddress = useTonAddress();
     const latestWin = 7;
@@ -47,20 +47,23 @@ function PlayScreen() {
       return shuffled.slice(0, 2);
     };
 
+    const updateWheelData = (user: UserData | null) => {
+      const newPlayers = getRandomPlayers();
+      setWheelData([
+        { option: newPlayers[0]?.slice(0, 9) || 'Player one' },
+        { option: newPlayers[1]?.slice(0, 9) || 'Player two' },
+        { option: user ? `${user?.firstName} (You)` : 'Player three' },
+      ]);
+    };
+
     useEffect(() => {
       const user = initializeWebApp();
       setUserdata(user);
-      const timerId = setTimeout(()=>{
-        setCurrentPlayers(getRandomPlayers())
-      },3000)
-     return ()=> clearTimeout(timerId)
+      
+      if (!mustSpin) {
+        updateWheelData(user);
+      }
     }, [mustSpin]);
-
-    const data = [
-      { option: currentPlayers[0]?.slice(0, 9) || 'Player one' },
-      { option: currentPlayers[1]?.slice(0, 9) || 'Player two' },
-      { option: userdata ? `${userdata?.firstName} (You)` : 'Player three' },
-    ];
 
     const handleSpinClick = async () => {
       if (!rawAddress || !userdata) {
@@ -81,14 +84,10 @@ function PlayScreen() {
       if (!mustSpin) {
         try {
           dispatch(deductSpinCost());
-          const newPrizeNumber = Math.floor(Math.random() * data.length);
+          const newPrizeNumber = Math.floor(Math.random() * wheelData.length);
           setPrizeNumber(newPrizeNumber);
           setMustSpin(true);
           soundManager.play('spin');
-          if(prizeNumber === 2){
-            dispatch(increaseToken());
-            toast.success('Congratulations! You won 5 Test coins!');
-          }
         } catch (error) {
           console.error('Failed to place bet:', error);
           toast.error('Failed to place bet. Please try again.');
@@ -99,12 +98,14 @@ function PlayScreen() {
     const handleStopSpinning = async () => {
       setMustSpin(false);
       setSelectedRange(null);
-      const winner = data[prizeNumber].option;
+      const winner = wheelData[prizeNumber].option;
       
       soundManager.stop('spin');
       soundManager.play('win');
 
-      setCurrentPlayers(getRandomPlayers());
+      if(prizeNumber === 2) {
+        dispatch(increaseToken());
+      }
 
       toast.custom((t:any) => (
         <div className={`${
@@ -120,15 +121,14 @@ function PlayScreen() {
                   {winner} has won the spin!
                 </p>
                 {prizeNumber === 2 ? 
-                <p className="mt-1 text-sm text-gray-300">
-                 You won 5 Test coins!  New Balance: {balance} Test Coin
-                </p>
-                :
-                 <p className="mt-1 text-sm text-gray-300">
-                 Cost: 5 Test coins | New Balance: {balance} Test Coin
-               </p>  
-              } 
-               
+                  <p className="mt-1 text-sm text-gray-300">
+                    You won 5 Test coins! New Balance: {balance} Test Coin
+                  </p>
+                  :
+                  <p className="mt-1 text-sm text-gray-300">
+                    Cost: 5 Test coins | New Balance: {balance} Test Coin
+                  </p>  
+                } 
               </div>
             </div>
           </div>
@@ -150,41 +150,41 @@ function PlayScreen() {
     return (
       <Template>
           <Toaster richColors />
-         <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
-  <DialogContent className="sm:max-w-[425px] bg-[#1D1B4D] text-white">
-    <DialogHeader>
-      <DialogTitle>Authentication Required</DialogTitle>
-      <DialogDescription className="text-gray-300">
-        Open this game in Telegram and connect wallet to play and win amazing prizes!
-      </DialogDescription>
-    </DialogHeader>
-    <div className="flex flex-col space-y-4 mt-4">
-      <a 
-        href="https://t.me/breeve1bot"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="bg-[#0088cc] text-white px-4 py-2 rounded-lg hover:bg-[#0077b5] transition-colors text-center"
-      >
-        Open in Telegram
-      </a>
-      <p className="text-sm text-gray-300">
-       Open in telegram and Connect wallet to:
-        <ul className="list-disc list-inside mt-2 space-y-1">
-          <li>Spin the wheel</li>
-          <li>Win Test coins</li>
-          <li>Track your winnings</li>
-          <li>Compete with other players</li>
-        </ul>
-      </p>
-      <button
-        onClick={() => setShowAuthDialog(false)}
-        className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
-      >
-        Cancel
-      </button>
-    </div>
-  </DialogContent>
-</Dialog>
+          <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
+            <DialogContent className="sm:max-w-[425px] bg-[#1D1B4D] text-white">
+              <DialogHeader>
+                <DialogTitle>Authentication Required</DialogTitle>
+                <DialogDescription className="text-gray-300">
+                  Open this game in Telegram and connect wallet to play and win amazing prizes!
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex flex-col space-y-4 mt-4">
+                <a 
+                  href="https://t.me/breeve1bot"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-[#0088cc] text-white px-4 py-2 rounded-lg hover:bg-[#0077b5] transition-colors text-center"
+                >
+                  Open in Telegram
+                </a>
+                <p className="text-sm text-gray-300">
+                  Open in telegram and Connect wallet to:
+                  <ul className="list-disc list-inside mt-2 space-y-1">
+                    <li>Spin the wheel</li>
+                    <li>Win Test coins</li>
+                    <li>Track your winnings</li>
+                    <li>Compete with other players</li>
+                  </ul>
+                </p>
+                <button
+                  onClick={() => setShowAuthDialog(false)}
+                  className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           <Dialog open={showBalanceDialog} onOpenChange={setShowBalanceDialog}>
             <DialogContent className="sm:max-w-[425px] bg-[#1D1B4D] text-white">
@@ -248,7 +248,7 @@ function PlayScreen() {
                           <Wheel
                               mustStartSpinning={mustSpin}
                               prizeNumber={prizeNumber}
-                              data={data}
+                              data={wheelData}
                               onStopSpinning={handleStopSpinning}
                               backgroundColors={['#FF4136','#89100a','#ce1e14']}
                               textColors={['#FFFFFF']}
