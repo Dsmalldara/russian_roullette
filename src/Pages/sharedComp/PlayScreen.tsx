@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dialog";
 
 import { useDispatch, useSelector } from 'react-redux';
-import { deductSpinCost } from '@/slices/faucetSlice.ts';
+import { deductSpinCost,increaseToken } from '@/slices/faucetSlice.ts';
 
 function PlayScreen() {
     const dispatch = useDispatch();
@@ -50,7 +50,10 @@ function PlayScreen() {
     useEffect(() => {
       const user = initializeWebApp();
       setUserdata(user);
-      setCurrentPlayers(getRandomPlayers());
+      const timerId = setTimeout(()=>{
+        setCurrentPlayers(getRandomPlayers())
+      },3000)
+     return ()=> clearTimeout(timerId)
     }, [mustSpin]);
 
     const data = [
@@ -77,6 +80,14 @@ function PlayScreen() {
 
       if (!mustSpin) {
         try {
+          if(winner = data[2].option){
+            dispatch(increaseToken())
+            const newPrizeNumber = Math.floor(Math.random() * data.length);
+            setPrizeNumber(newPrizeNumber);
+            setMustSpin(true);
+            soundManager.play('spin');
+            return 
+          }
           dispatch(deductSpinCost());
           
           const newPrizeNumber = Math.floor(Math.random() * data.length);

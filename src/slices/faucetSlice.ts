@@ -42,8 +42,12 @@ const faucetSlice = createSlice({
     },
     resetFaucet: () => initialState,
   },
+  increaseToken:(state)=>{
+    state.balance = (Number(state.balance)+5).toString();
+    state.claimedHistory.push({address,timestamp:new Date().toISOString()})
+  }
 });
 
 // Export actions and reducer
-export const { claimTokens, deductSpinCost, resetFaucet } = faucetSlice.actions;
+export const { claimTokens, deductSpinCost, resetFaucet, increaseToken } = faucetSlice.actions;
 export default faucetSlice.reducer;
