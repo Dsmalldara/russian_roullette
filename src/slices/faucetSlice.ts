@@ -41,10 +41,10 @@ const faucetSlice = createSlice({
       });
     },
     resetFaucet: () => initialState,
-  },
-  increaseToken:(state)=>{
-    state.balance = (Number(state.balance)+5).toString();
-    state.claimedHistory.push({address,timestamp:new Date().toISOString(), cost:5})
+    increaseToken: (state) => {
+      state.balance = (Number(state.balance) + 5).toString();
+      state.claimedHistory.push({ address: 'unknown', timestamp: new Date().toISOString() }); // Assuming 'address' should be provided
+    }
   }
 });
 
