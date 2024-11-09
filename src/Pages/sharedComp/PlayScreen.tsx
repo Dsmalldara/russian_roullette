@@ -59,7 +59,7 @@ function PlayScreen() {
     const data = [
       { option: currentPlayers[0]?.slice(0, 9) || 'Player one' },
       { option: currentPlayers[1]?.slice(0, 9) || 'Player two' },
-      {option: userdata ? `${userdata?.firstName} (You)` : 'Player three' },
+      { option: userdata ? `${userdata?.firstName} (You)` : 'Player three' },
     ];
 
     const handleSpinClick = async () => {
@@ -80,17 +80,14 @@ function PlayScreen() {
 
       if (!mustSpin) {
         try {
+          dispatch(deductSpinCost());
           const newPrizeNumber = Math.floor(Math.random() * data.length);
           setPrizeNumber(newPrizeNumber);
           setMustSpin(true);
           soundManager.play('spin');
-          
-          // Always deduct points when spinning
-          dispatch(deductSpinCost());
-          
-          // If player wins, add points
-          if(data[newPrizeNumber].option === data[2].option) {
+          if(prizeNumber === 2){
             dispatch(increaseToken());
+            toast.success('Congratulations! You won 5 Test coins!');
           }
         } catch (error) {
           console.error('Failed to place bet:', error);
@@ -107,9 +104,7 @@ function PlayScreen() {
       soundManager.stop('spin');
       soundManager.play('win');
 
-      // Get new players for next round
-      const newPlayers = getRandomPlayers();
-      setCurrentPlayers(newPlayers);
+      setCurrentPlayers(getRandomPlayers());
 
       toast.custom((t:any) => (
         <div className={`${
@@ -124,12 +119,16 @@ function PlayScreen() {
                 <p className="mt-1 text-sm text-gray-300">
                   {winner} has won the spin!
                 </p>
+                {prizeNumber === 2 ? 
                 <p className="mt-1 text-sm text-gray-300">
-                  {winner === data[2].option ? 
-                    `Congratulations! You won! New Balance: ${balance} Test Coin` :
-                    `Cost: 5 Test coins | New Balance: ${balance} Test Coin`
-                  }
+                 You won 5 Test coins!  New Balance: {balance} Test Coin
                 </p>
+                :
+                 <p className="mt-1 text-sm text-gray-300">
+                 Cost: 5 Test coins | New Balance: {balance} Test Coin
+               </p>  
+              } 
+               
               </div>
             </div>
           </div>
@@ -147,49 +146,6 @@ function PlayScreen() {
         position: 'top-center',
       });
     };
-    // const handleStopSpinning = async () => {
-    //   setMustSpin(false);
-    //   setSelectedRange(null);
-    //   const winner = data[prizeNumber].option;
-      
-    //   soundManager.stop('spin');
-    //   soundManager.play('win');
-
-    //   setCurrentPlayers(getRandomPlayers());
-
-    //   toast.custom((t:any) => (
-    //     <div className={`${
-    //       t.visible ? 'animate-enter' : 'animate-leave'
-    //     } max-w-md w-full bg-[#1D1B4D] shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}>
-    //       <div className="flex-1 w-0 p-4">
-    //         <div className="flex items-start">
-    //           <div className="ml-3 flex-1">
-    //             <p className="text-sm font-medium text-white">
-    //               Winner Announcement!
-    //             </p>
-    //             <p className="mt-1 text-sm text-gray-300">
-    //               {winner} has won the spin!
-    //             </p>
-    //             <p className="mt-1 text-sm text-gray-300">
-    //               Cost: 5 Test coins | New Balance: {balance} Test Coin
-    //             </p>
-    //           </div>
-    //         </div>
-    //       </div>
-    //       <div className="flex border-l border-gray-700">
-    //         <button
-    //           onClick={() => toast.dismiss(t.id)}
-    //           className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-red-600 hover:text-red-500 focus:outline-none"
-    //         >
-    //           Close
-    //         </button>
-    //       </div>
-    //     </div>
-    //   ), {
-    //     duration: 5000,
-    //     position: 'top-center',
-    //   });
-    // };
 
     return (
       <Template>
