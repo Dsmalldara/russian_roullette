@@ -80,7 +80,7 @@ function PlayScreen() {
 
       if (!mustSpin) {
         try {
-          if(winner = data[2].option){
+          if(data[prizeNumber].option =  data[2].option){
             dispatch(increaseToken())
             const newPrizeNumber = Math.floor(Math.random() * data.length);
             setPrizeNumber(newPrizeNumber);

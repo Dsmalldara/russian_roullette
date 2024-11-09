@@ -44,7 +44,7 @@ const faucetSlice = createSlice({
   },
   increaseToken:(state)=>{
     state.balance = (Number(state.balance)+5).toString();
-    state.claimedHistory.push({address,timestamp:new Date().toISOString()})
+    state.claimedHistory.push({address,timestamp:new Date().toISOString(), cost:5})
   }
 });
 
