@@ -29,8 +29,7 @@ function PlayScreen() {
     const [showAuthDialog, setShowAuthDialog] = useState(false);
     const [showBalanceDialog, setShowBalanceDialog] = useState(false);
     const [userdata, setUserdata] = useState<UserData | null>(null);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [currentPlayers, setCurrentPlayers] = useState<string[]>([]);
+    const [, setCurrentPlayers] = useState<string[]>([]);
     const [selectedRange, setSelectedRange] = useState<string | null>(null);
     const [wheelData, setWheelData] = useState<Array<{ option: string }>>([]);
     
