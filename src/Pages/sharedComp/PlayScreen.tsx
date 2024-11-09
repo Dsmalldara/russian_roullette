@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
 import { Wheel } from 'react-custom-roulette';
 import Template from './RoulletteTemplate';
@@ -17,7 +18,7 @@ import {
 } from "@/components/ui/dialog";
 
 import { useDispatch, useSelector } from 'react-redux';
-import { deductSpinCost, increaseToken } from '@/slices/faucetSlice.ts';
+import { deductSpinCost,increaseToken } from '@/slices/faucetSlice.ts';
 
 function PlayScreen() {
     const dispatch = useDispatch();
@@ -30,8 +31,6 @@ function PlayScreen() {
     const [userdata, setUserdata] = useState<UserData | null>(null);
     const [currentPlayers, setCurrentPlayers] = useState<string[]>([]);
     const [selectedRange, setSelectedRange] = useState<string | null>(null);
-    const [lastWinner, setLastWinner] = useState<string>('');
-    const [nextPlayers, setNextPlayers] = useState<string[]>([]);
     
     const rawAddress = useTonAddress();
     const latestWin = 7;
@@ -51,15 +50,16 @@ function PlayScreen() {
     useEffect(() => {
       const user = initializeWebApp();
       setUserdata(user);
-      setCurrentPlayers(getRandomPlayers());
-      // Pre-generate next players
-      setNextPlayers(getRandomPlayers());
-    }, []);
+      const timerId = setTimeout(()=>{
+        setCurrentPlayers(getRandomPlayers())
+      },3000)
+     return ()=> clearTimeout(timerId)
+    }, [mustSpin]);
 
     const data = [
       { option: currentPlayers[0]?.slice(0, 9) || 'Player one' },
       { option: currentPlayers[1]?.slice(0, 9) || 'Player two' },
-      { option: userdata ? `${userdata?.firstName} (You)` : 'Player three' },
+      {option: userdata ? `${userdata?.firstName} (You)` : 'Player three' },
     ];
 
     const handleSpinClick = async () => {
@@ -79,35 +79,37 @@ function PlayScreen() {
       }
 
       if (!mustSpin) {
-        const newPrizeNumber = Math.floor(Math.random() * data.length);
-        setPrizeNumber(newPrizeNumber);
-        setMustSpin(true);
-        soundManager.play('spin');
-        
-        // Deduct points immediately when spinning
-        dispatch(deductSpinCost());
+        try {
+          const newPrizeNumber = Math.floor(Math.random() * data.length);
+          setPrizeNumber(newPrizeNumber);
+          setMustSpin(true);
+          soundManager.play('spin');
+          
+          // Always deduct points when spinning
+          dispatch(deductSpinCost());
+          
+          // If player wins, add points
+          if(data[newPrizeNumber].option === data[2].option) {
+            dispatch(increaseToken());
+          }
+        } catch (error) {
+          console.error('Failed to place bet:', error);
+          toast.error('Failed to place bet. Please try again.');
+        }
       }
     };
 
     const handleStopSpinning = async () => {
       setMustSpin(false);
       setSelectedRange(null);
-      
       const winner = data[prizeNumber].option;
-      setLastWinner(winner);
       
       soundManager.stop('spin');
       soundManager.play('win');
 
-      // Update points based on winner
-      if (winner === data[2].option) {
-        // Player wins
-        dispatch(increaseToken());
-      }
-
-      // Update players for next round
-      setCurrentPlayers(nextPlayers);
-      setNextPlayers(getRandomPlayers());
+      // Get new players for next round
+      const newPlayers = getRandomPlayers();
+      setCurrentPlayers(newPlayers);
 
       toast.custom((t:any) => (
         <div className={`${
@@ -124,8 +126,8 @@ function PlayScreen() {
                 </p>
                 <p className="mt-1 text-sm text-gray-300">
                   {winner === data[2].option ? 
-                    `Congratulations! You won 7 Test coins! New Balance: ${balance} Test Coin` :
-                    `Better luck next time! New Balance: ${balance} Test Coin`
+                    `Congratulations! You won! New Balance: ${balance} Test Coin` :
+                    `Cost: 5 Test coins | New Balance: ${balance} Test Coin`
                   }
                 </p>
               </div>
@@ -145,11 +147,110 @@ function PlayScreen() {
         position: 'top-center',
       });
     };
+    // const handleStopSpinning = async () => {
+    //   setMustSpin(false);
+    //   setSelectedRange(null);
+    //   const winner = data[prizeNumber].option;
+      
+    //   soundManager.stop('spin');
+    //   soundManager.play('win');
+
+    //   setCurrentPlayers(getRandomPlayers());
+
+    //   toast.custom((t:any) => (
+    //     <div className={`${
+    //       t.visible ? 'animate-enter' : 'animate-leave'
+    //     } max-w-md w-full bg-[#1D1B4D] shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}>
+    //       <div className="flex-1 w-0 p-4">
+    //         <div className="flex items-start">
+    //           <div className="ml-3 flex-1">
+    //             <p className="text-sm font-medium text-white">
+    //               Winner Announcement!
+    //             </p>
+    //             <p className="mt-1 text-sm text-gray-300">
+    //               {winner} has won the spin!
+    //             </p>
+    //             <p className="mt-1 text-sm text-gray-300">
+    //               Cost: 5 Test coins | New Balance: {balance} Test Coin
+    //             </p>
+    //           </div>
+    //         </div>
+    //       </div>
+    //       <div className="flex border-l border-gray-700">
+    //         <button
+    //           onClick={() => toast.dismiss(t.id)}
+    //           className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-red-600 hover:text-red-500 focus:outline-none"
+    //         >
+    //           Close
+    //         </button>
+    //       </div>
+    //     </div>
+    //   ), {
+    //     duration: 5000,
+    //     position: 'top-center',
+    //   });
+    // };
 
     return (
       <Template>
           <Toaster richColors />
-          {/* ... (Dialog components remain the same) ... */}
+         <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
+  <DialogContent className="sm:max-w-[425px] bg-[#1D1B4D] text-white">
+    <DialogHeader>
+      <DialogTitle>Authentication Required</DialogTitle>
+      <DialogDescription className="text-gray-300">
+        Open this game in Telegram and connect wallet to play and win amazing prizes!
+      </DialogDescription>
+    </DialogHeader>
+    <div className="flex flex-col space-y-4 mt-4">
+      <a 
+        href="https://t.me/breeve1bot"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="bg-[#0088cc] text-white px-4 py-2 rounded-lg hover:bg-[#0077b5] transition-colors text-center"
+      >
+        Open in Telegram
+      </a>
+      <p className="text-sm text-gray-300">
+       Open in telegram and Connect wallet to:
+        <ul className="list-disc list-inside mt-2 space-y-1">
+          <li>Spin the wheel</li>
+          <li>Win Test coins</li>
+          <li>Track your winnings</li>
+          <li>Compete with other players</li>
+        </ul>
+      </p>
+      <button
+        onClick={() => setShowAuthDialog(false)}
+        className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+      >
+        Cancel
+      </button>
+    </div>
+  </DialogContent>
+</Dialog>
+
+          <Dialog open={showBalanceDialog} onOpenChange={setShowBalanceDialog}>
+            <DialogContent className="sm:max-w-[425px] bg-[#1D1B4D] text-white">
+              <DialogHeader>
+                <DialogTitle>Insufficient Balance</DialogTitle>
+                <DialogDescription className="text-gray-300">
+                  You need at least 2 Test coins to play. Your current balance is {balance} Test coins.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex flex-col space-y-4 mt-4">
+                <p className="text-sm text-gray-300">
+                  Please claim tokens from the faucet to continue playing.
+                </p>
+                <button
+                  onClick={() => setShowBalanceDialog(false)}
+                  className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  Got it
+                </button>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           <div className='min-h-screen max-w-4xl mx-auto flex flex-col items-center px-4 sm:px-6 lg:px-8'>
               <div className='w-full relative'>
@@ -173,13 +274,14 @@ function PlayScreen() {
                       Balance: <span className='text-red-600 font-bold'>{balance} Test coins</span>
                   </p>
                   <p className='text-white'>
-                      {lastWinner ? `${lastWinner} just won ` : "0x***cb0u0d.. Just won "}
+                      0x***cb0u0d.. Just won 
                       <span className='text-red-600 font-bold'> {latestWin} Test coins</span>
                   </p>
                   <div className='text-sm font-semibold text-white'>
                       <p>Click spin after selecting a number pool</p>
                   </div>
               </div>
+
               <div className="w-full mt-6">
                 <NumberRangeGrid onSelectRange={setSelectedRange} selectedRange={selectedRange} />
               </div>
@@ -225,7 +327,7 @@ function PlayScreen() {
                   </div>
               </div>
           </div>
-          </Template>
+      </Template>
     );
 }
 
