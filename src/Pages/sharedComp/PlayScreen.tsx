@@ -60,7 +60,13 @@ function PlayScreen() {
     const data = [
       { option: players[0]?.slice(0, 9) || 'Player one' },
       { option: players[1]?.slice(0, 9) || 'Player two' },
-      { option: userdata ? `${userdata?.firstName} (You)` : 'Player three' },
+      { 
+        option: userdata 
+          ? `${userdata.firstName.length > 9 ? userdata.firstName.slice(0, 6) + "..." : userdata.firstName} (You)` 
+          : 'Player three' 
+      },
+      
+      
     ];
 
     const handleSpinClick = async () => {
