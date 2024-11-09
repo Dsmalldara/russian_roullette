@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dialog";
 
 import { useDispatch, useSelector } from 'react-redux';
-import { deductSpinCost, increaseToken } from '@/slices/faucetSlice.ts';
+import { deductSpinCost,increaseToken } from '@/slices/faucetSlice.ts';
 
 function PlayScreen() {
     const dispatch = useDispatch();
@@ -30,7 +30,6 @@ function PlayScreen() {
     const [showBalanceDialog, setShowBalanceDialog] = useState(false);
     const [userdata, setUserdata] = useState<UserData | null>(null);
     const [selectedRange, setSelectedRange] = useState<string | null>(null);
-    const [wheelData, setWheelData] = useState<Array<{ option: string }>>([]);
     
     const rawAddress = useTonAddress();
     const latestWin = 7;
@@ -47,23 +46,22 @@ function PlayScreen() {
       return shuffled.slice(0, 2);
     };
 
-    const updateWheelData = (user: UserData | null) => {
-      const newPlayers = getRandomPlayers();
-      setWheelData([
-        { option: newPlayers[0]?.slice(0, 9) || 'Player one' },
-        { option: newPlayers[1]?.slice(0, 9) || 'Player two' },
-        { option: user ? `${user?.firstName} (You)` : 'Player three' },
-      ]);
-    };
+    const [players, setPlayers] = useState(() => getRandomPlayers());
 
     useEffect(() => {
       const user = initializeWebApp();
       setUserdata(user);
       
       if (!mustSpin) {
-        updateWheelData(user);
+        setPlayers(getRandomPlayers());
       }
     }, [mustSpin]);
+
+    const data = [
+      { option: players[0]?.slice(0, 9) || 'Player one' },
+      { option: players[1]?.slice(0, 9) || 'Player two' },
+      { option: userdata ? `${userdata?.firstName} (You)` : 'Player three' },
+    ];
 
     const handleSpinClick = async () => {
       if (!rawAddress || !userdata) {
@@ -84,10 +82,13 @@ function PlayScreen() {
       if (!mustSpin) {
         try {
           dispatch(deductSpinCost());
-          const newPrizeNumber = Math.floor(Math.random() * wheelData.length);
+          const newPrizeNumber = Math.floor(Math.random() * data.length);
           setPrizeNumber(newPrizeNumber);
           setMustSpin(true);
           soundManager.play('spin');
+          if(prizeNumber === 2){
+            dispatch(increaseToken());
+          }
         } catch (error) {
           console.error('Failed to place bet:', error);
           toast.error('Failed to place bet. Please try again.');
@@ -98,14 +99,10 @@ function PlayScreen() {
     const handleStopSpinning = async () => {
       setMustSpin(false);
       setSelectedRange(null);
-      const winner = wheelData[prizeNumber].option;
+      const winner = data[prizeNumber].option;
       
       soundManager.stop('spin');
       soundManager.play('win');
-
-      if(prizeNumber === 2) {
-        dispatch(increaseToken());
-      }
 
       toast.custom((t:any) => (
         <div className={`${
@@ -121,14 +118,15 @@ function PlayScreen() {
                   {winner} has won the spin!
                 </p>
                 {prizeNumber === 2 ? 
-                  <p className="mt-1 text-sm text-gray-300">
-                    You won 5 Test coins! New Balance: {balance} Test Coin
-                  </p>
-                  :
-                  <p className="mt-1 text-sm text-gray-300">
-                    Cost: 5 Test coins | New Balance: {balance} Test Coin
-                  </p>  
-                } 
+                <p className="mt-1 text-sm text-gray-300">
+                 You won 5 Test coins!  New Balance: {balance} Test Coin
+                </p>
+                :
+                 <p className="mt-1 text-sm text-gray-300">
+                 Cost: 5 Test coins | New Balance: {balance} Test Coin
+               </p>  
+              } 
+               
               </div>
             </div>
           </div>
@@ -248,7 +246,7 @@ function PlayScreen() {
                           <Wheel
                               mustStartSpinning={mustSpin}
                               prizeNumber={prizeNumber}
-                              data={wheelData}
+                              data={data}
                               onStopSpinning={handleStopSpinning}
                               backgroundColors={['#FF4136','#89100a','#ce1e14']}
                               textColors={['#FFFFFF']}
